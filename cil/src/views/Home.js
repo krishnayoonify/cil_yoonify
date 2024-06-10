@@ -6,8 +6,10 @@ import Frame3 from './f3.png';
 import Frame4 from './f4.png';
 import { IconFileUpload } from "@tabler/icons";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { updateAnyUserState, loginUser } from "../store/actions/userActions";
+import { connect } from "react-redux";
 import { height } from '@mui/system';
-
+import { toast } from "react-toastify";
 const styles = {
   root: {
     height: '100vh',
@@ -118,6 +120,7 @@ class UploadScreen extends Component {
     // alert(`${process.env.REACT_APP_ACCESS_KEY}`);
     console.log(' - - - -')
     console.log(process.env)
+    this.props.updateAnyUserState({ loading: true });
   const s3Client = new S3Client({
     region: 'ap-south-1', // Replace with your region
     credentials: {
@@ -144,6 +147,15 @@ class UploadScreen extends Component {
     // alert('File uploaded successfully!');
     console.log(data)
     localStorage.setItem('uniqueid', uniqueId);
+    toast.success("Tender Uploaded Successfully", {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+          });
     window.location.href = `/tender`;
     
     this.handleCloseModal();
@@ -151,6 +163,16 @@ class UploadScreen extends Component {
   } catch (err) {
     console.error('Error uploading file:', err);
     alert('File upload failed.');
+    this.props.updateAnyUserState({ loading: false });
+    toast.error("Tender Uploaded Failed", {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+          });
   }
 };
 handleNameChange = (event) => {
@@ -158,6 +180,7 @@ handleNameChange = (event) => {
 };
 
   render() {
+    
     return (
       <Box style={styles.root}>
         <Container>
@@ -246,4 +269,12 @@ handleNameChange = (event) => {
   }
 }
 
-export default UploadScreen;
+
+const mapStateToProps = (state) => ({});
+
+const mapDispatchToProps = {
+  updateAnyUserState,
+  loginUser,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(UploadScreen);

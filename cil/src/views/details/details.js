@@ -19,6 +19,7 @@ import {
   Modal, Backdrop, Fade,Box,TextField,
 } from '@mui/material';
 import { UploadFile as UploadIcon } from '@mui/icons-material';
+import CircularProgress from '@mui/material/CircularProgress';
 import Frame1 from './Frame 1000006231.png';
 import Frame2 from './Frame 1000006247.png';
 import Frame3 from './Frame 1000006250.png';
@@ -28,6 +29,8 @@ import { IconFileUpload } from "@tabler/icons";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { useParams } from 'react-router-dom';
 import { toast } from "react-toastify";
+import { updateAnyUserState, loginUser } from "../../store/actions/userActions";
+import { connect } from "react-redux";
 
 const styles = {
   root: {
@@ -114,7 +117,7 @@ class Content extends React.Component {
       // companyName: '',
       // criteria: '',
       item: {},
-      uniqueid: localStorage.getItem('uniqueid'),//2aa84753-03f1-4bc0-aa61-a40ea82bdee2
+      uniqueid: localStorage.getItem('uniqueid'),//2aa84753-03f1-4bc0-aa61-a40ea82bdee2//'d8204704-e24b-432a-a429-6f2e4838efe0',//
       modalOpen: false,
       selectedFile: null,
       selectedTab: 0,
@@ -171,7 +174,7 @@ class Content extends React.Component {
     alert("Please select a file and enter a name first.");
     return;
   }
-    
+  this.props.updateAnyUserState({ loading: true });
   const s3Client = new S3Client({
     region: 'ap-south-1', // Replace with your region
     credentials: {
@@ -191,7 +194,15 @@ class Content extends React.Component {
     const data = await s3Client.send(new PutObjectCommand(params));
     this.fetchData();
     this.handleCloseModal();
-    
+    toast.success("Response Uploaded Successfully", {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+          });
   } catch (err) {
     // console.error('Error uploading file:', err);
     // alert('File upload failed.');
@@ -204,7 +215,8 @@ class Content extends React.Component {
             draggable: true,
             progress: undefined,
           });
-  }
+    }
+    this.props.updateAnyUserState({ loading: false });
 };
 handleTabChange = (event, newValue) => {
     this.setState({ selectedTab: newValue });
@@ -317,7 +329,50 @@ handleTabChange = (event, newValue) => {
   //     </TableContainer>
   //   </>
   // );
+renderTenderTable = (item) => (
+    
+    <>
+       <TableContainer component={Paper} style={{ borderRadius: '15px', overflow: 'scroll', maxHeight: '700px', boxShadow: '15px 14px 20px 0 #00000057' }}>
+      <Table stickyHeader>
+        <TableHead>
+            <TableRow>
+              {item?.tender_info?.requirements && 
+                <><TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria</TableCell>
+                <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Sub Category</TableCell>
+            <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell></>}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+            {item?.tender_info?.tender_summary && <TableRow>
+              <TableCell ><b>Overall Summary</b></TableCell>
+              <TableCell ></TableCell>
+              <TableCell >{item?.tender_info?.tender_summary}</TableCell>
+              {/* <TableCell >-</TableCell>
+              <TableCell >-</TableCell>
+              <TableCell >-</TableCell>
+              <TableCell >-</TableCell> */}
+            </TableRow>}
+            {Object.keys(item?.tender_info?.requirements || {}).flatMap((category) =>
+            
+            item?.tender_info?.requirements[category]?.map((criteria, criteriaIndex) => {
+              
+              return (
+                <TableRow key={`${category}-${criteriaIndex}`} style={{ borderBottom: '1px solid #000' }}>
+                  <TableCell><b>{category.toUpperCase()} ({criteria?.criteria_id})</b></TableCell>
+                  <TableCell>{criteria?.criteria_subcategory}</TableCell>
+                  <TableCell>{criteria?.criteria_description}</TableCell>
+                  
+                </TableRow>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
 
+
+    </>
+  );
    
   renderComparisionTable = (item) => (
     
@@ -327,7 +382,8 @@ handleTabChange = (event, newValue) => {
         <TableHead>
             <TableRow>
               {item?.tender_info?.requirements && 
-            <><TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria</TableCell>
+                <><TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria</TableCell>
+                <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Sub Category</TableCell>
             <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell></>}
             {item?.vendors?.map((vendor, index) => (
               <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
@@ -342,14 +398,7 @@ handleTabChange = (event, newValue) => {
           </TableRow>
         </TableHead>
         <TableBody>
-            {item?.tender_summary && <TableRow>
-              <TableCell ><b>Overall Summary</b></TableCell>
-              <TableCell >{item?.tender_summary}</TableCell>
-              {/* <TableCell >-</TableCell>
-              <TableCell >-</TableCell>
-              <TableCell >-</TableCell>
-              <TableCell >-</TableCell> */}
-            </TableRow>}
+            
             {Object.keys(item?.tender_info?.requirements || {}).flatMap((category) =>
             
             item?.tender_info?.requirements[category]?.map((criteria, criteriaIndex) => {
@@ -357,6 +406,7 @@ handleTabChange = (event, newValue) => {
               return (
                 <TableRow key={`${category}-${criteriaIndex}`} style={{ borderBottom: '1px solid #000' }}>
                   <TableCell><b>{category.toUpperCase()} ({criteria?.criteria_id})</b></TableCell>
+                  <TableCell>{criteria?.criteria_subcategory}</TableCell>
                   <TableCell>{criteria?.criteria_description}</TableCell>
                   {item?.vendors?.map((vendor, vendorIndex) => {
                     const response = vendor?.responses?.[category]?.find((r) => r.criteria_id === criteria?.criteria_id);
@@ -471,6 +521,113 @@ handleTabChange = (event, newValue) => {
       </TableContainer> */}
     </>
   );
+  groupCriteria = (criteria) => {
+    const grouped = [];
+    if (criteria) {
+      criteria.forEach((criterion) => {
+        let group = grouped.find(g => g[0].criteria_subcategory === criterion.criteria_subcategory);
+        if (!group) {
+          group = [];
+          grouped.push(group);
+        }
+        group.push(criterion);
+      });
+    }
+    return grouped;
+  };
+  renderTechnicalTable = (item, req_parm) => {
+    const groupedCriteria = this.groupCriteria(item?.tender_info?.requirements[req_parm]);
+
+    return (
+      <>
+        <TableContainer component={Paper} style={{ borderRadius: '15px', overflow: 'scroll', maxHeight: '700px', boxShadow: '15px 14px 20px 0 #00000057' }}>
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                {item?.tender_info?.requirements && 
+                  <>
+                    {/* <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria</TableCell> */}
+                    <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Requirements</TableCell>
+                    <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell>
+                  </>
+                }
+                {item?.vendors?.map((vendor, index) => (
+                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
+                    {vendor?.vendor_name} (Response)
+                  </TableCell>
+                ))}
+                {item?.vendors?.map((vendor, index) => (
+                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
+                    {vendor?.vendor_name} (Evaluation)
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {groupedCriteria.map((group, groupIndex) => (
+                group.map((criteria, criteriaIndex) => (
+                  <TableRow key={`${criteria.criteria_id}-${criteriaIndex}`} style={{ borderBottom: '1px solid #000' }}>
+                    {criteriaIndex === 0 && (
+                      <TableCell rowSpan={group.length} style={{background:'#eaeaea'}}>
+                        <b>{criteria.criteria_subcategory}</b>
+                      </TableCell>
+                    )}
+                    <TableCell>{criteria.criteria_description}</TableCell>
+                    {item?.vendors?.map((vendor, vendorIndex) => {
+                      const response = vendor?.responses?.[req_parm]?.find((r) => r.criteria_id === criteria.criteria_id);
+
+                      const formatResponse = (res) => {
+                        if (typeof res === 'string') {
+                          return res;
+                        } else if (res && typeof res === 'object') {
+                          return '-'; // JSON.stringify(res, null, 2);
+                        } else {
+                          return '-';
+                        }
+                      };
+
+                      return (
+                        <TableCell key={`${vendor.vendor_name}-${vendorIndex}-${criteria.criteria_id}`}>
+                          {formatResponse(response?.response)}
+                        </TableCell>
+                      );
+                    })}
+                    {item?.vendors?.map((vendor, vendorIndex) => {
+                      const evaluation = vendor?.responses?.[req_parm]?.find((r) => r.criteria_id === criteria.criteria_id);
+                      return (
+                        <TableCell key={`${vendor.vendor_name}-${vendorIndex}-${criteria.criteria_id}-evaluation`}>
+                          {evaluation?.result ? (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '2px 8px',
+                                borderRadius: '5px',
+                                backgroundColor: evaluation.result === 'MET' ? 'green' :
+                                evaluation.result === 'PARTIALLY MET' ? 'orange' :
+                                evaluation.result === 'NOT MET' ? 'red' :
+                                evaluation.result === 'INSUFFICIENT INFO' ? 'gray' :
+                                'transparent',
+                                color: 'white',
+                              }}
+                            >
+                              {evaluation.result}
+                            </span>
+                          ) : (
+                            '-'
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </>
+    );
+  };
+
   render() {
     const { item } = this.state;
     const { selectedTab } = this.state;
@@ -479,6 +636,15 @@ handleTabChange = (event, newValue) => {
         <Grid container spacing={3}>
           <Grid item xs={12} md={8}>
             <Paper style={{ padding: '2rem' }}>
+              {!item?.tender_info?.complete && (
+                  <div style={{display: 'flex',
+                    alignItems: 'right',
+                    justifyContent: 'right',
+                    }}>
+                    <CircularProgress />
+                    <Typography variant="h6" style={{marginLeft:'10px', marginTop:'10px'}}>Processing Data...</Typography>
+                  </div>
+                )}
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
                     <img src={Frame2} alt="crane1" style={{ width: '100%',  borderRadius: '25px'}} />
@@ -506,7 +672,7 @@ handleTabChange = (event, newValue) => {
                   {/* <Typography variant="body2" gutterBottom style={{background: '#cdc5c55c',width: '146px', borderRadius: '35px',textAlign: 'center',padding: '10px', margin:'20px 0',  boxShadow:'5px 5px 5px 0 #00000057'}}>
                     {item && item.vendors && item.vendors.length} Bid Responses
                   </Typography> */}
-                  
+                 
                   
                 </Grid>
               </Grid>
@@ -590,17 +756,26 @@ handleTabChange = (event, newValue) => {
           </Grid> */}
           {item && item?.tender_info && (
             <>
-              {this.renderComparisionTable(item)}
-            {/* <Tabs value={selectedTab} onChange={this.handleTabChange} aria-label="criteria tabs">
-              <Tab label="Tender Details" />
-              <Tab label="Vendor Details" />
-              <Tab label="Vendor Diff" />
+              
+            <Tabs value={selectedTab} onChange={this.handleTabChange} aria-label="criteria tabs">
+                <Tab label="Tender Requirements" />
+                <Tab label="Technical Details" />
+                <Tab label="Commercial Details" />
+                <Tab label="Eligibility Details" />
+                <Tab label="Provenness Details" />
+                <Tab label="Comparision" />
+              {/* <Tab label="Vendor Diff" /> */}
             </Tabs>
             <Box sx={{ p: 3 }}>
-               {selectedTab === 0 && this.renderTendor(item.tender_info.requirements)}
-              {selectedTab === 1 && this.renderVendorTable(item)}
-              {selectedTab === 2 && this.renderComparisionTable(item)} 
-            </Box> */}
+               {selectedTab === 0 && this.renderTenderTable(item)}
+                {selectedTab === 1 && this.renderTechnicalTable(item, 'technical')}
+                {selectedTab === 2 && this.renderTechnicalTable(item, 'commercial')}
+                {selectedTab === 3 && this.renderTechnicalTable(item, 'eligibility')}
+                {selectedTab === 4 && this.renderTechnicalTable(item, 'provenness')}
+                {selectedTab === 5 && this.renderComparisionTable(item)}
+                
+              {/* {selectedTab === 2 && this.renderComparisionTable(item)}  */}
+            </Box>
           </>
         )}
           
@@ -643,4 +818,12 @@ handleTabChange = (event, newValue) => {
   }
 }
 
-export default Content;
+
+const mapStateToProps = (state) => ({});
+
+const mapDispatchToProps = {
+  updateAnyUserState,
+  loginUser,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Content);
