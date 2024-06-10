@@ -631,6 +631,20 @@ renderTenderTable = (item) => (
   render() {
     const { item } = this.state;
     const { selectedTab } = this.state;
+    const hasTechnicalDetails = item?.tender_info?.requirements?.technical?.length > 0;
+    const hasCommercialDetails = item?.tender_info?.requirements?.commercial?.length > 0;
+    const hasEligibilityDetails = item?.tender_info?.requirements?.eligibility?.length > 0;
+    const hasProvennessDetails = item?.tender_info?.requirements?.provenness?.length > 0;
+    const hasSummaryData = hasTechnicalDetails || hasCommercialDetails || hasEligibilityDetails || hasProvennessDetails;
+
+    const hasVendorData = item?.vendors?.some(vendor => 
+        ['technical', 'commercial', 'eligibility', 'provenness'].some(category =>
+            vendor?.responses?.[category]?.length > 0
+        )
+    );
+
+    const hasComparisonData = (hasTechnicalDetails || hasCommercialDetails || hasEligibilityDetails || hasProvennessDetails) && hasVendorData;
+
     return (
       <div style={{ padding: '2rem', marginTop:'70px' }}>
         <Grid container spacing={3}>
@@ -756,27 +770,24 @@ renderTenderTable = (item) => (
           </Grid> */}
           {item && item?.tender_info && (
             <>
-              
-            <Tabs value={selectedTab} onChange={this.handleTabChange} aria-label="criteria tabs">
-                <Tab label="Tender Requirements" />
-                <Tab label="Technical Details" />
-                <Tab label="Commercial Details" />
-                <Tab label="Eligibility Details" />
-                <Tab label="Provenness Details" />
-                <Tab label="Comparision" />
-              {/* <Tab label="Vendor Diff" /> */}
-            </Tabs>
-            <Box sx={{ p: 3 }}>
-               {selectedTab === 0 && this.renderTenderTable(item)}
-                {selectedTab === 1 && this.renderTechnicalTable(item, 'technical')}
-                {selectedTab === 2 && this.renderTechnicalTable(item, 'commercial')}
-                {selectedTab === 3 && this.renderTechnicalTable(item, 'eligibility')}
-                {selectedTab === 4 && this.renderTechnicalTable(item, 'provenness')}
-                {selectedTab === 5 && this.renderComparisionTable(item)}
+                <Tabs value={selectedTab} onChange={this.handleTabChange} aria-label="criteria tabs">
                 
-              {/* {selectedTab === 2 && this.renderComparisionTable(item)}  */}
-            </Box>
-          </>
+                {hasSummaryData && <Tab label="Tender Requirements" />}
+                    {hasTechnicalDetails && <Tab label="Technical Details" />}
+                    {hasCommercialDetails && <Tab label="Commercial Details" />}
+                    {hasEligibilityDetails && <Tab label="Eligibility Details" />}
+                    {hasProvennessDetails && <Tab label="Provenness Details" />}
+                    {hasComparisonData && <Tab label="Comparison" />}
+                </Tabs>
+                <Box sx={{ p: 3 }}>                
+                {selectedTab === 0 && hasSummaryData && this.renderTenderTable(item)}
+                    {selectedTab === 1 && hasTechnicalDetails && this.renderTechnicalTable(item, 'technical')}
+                    {selectedTab === 2 && hasCommercialDetails && this.renderTechnicalTable(item, 'commercial')}
+                    {selectedTab === 3 && hasEligibilityDetails && this.renderTechnicalTable(item, 'eligibility')}
+                    {selectedTab === 4 && hasProvennessDetails && this.renderTechnicalTable(item, 'provenness')}
+                    {selectedTab === 5 && hasComparisonData && this.renderComparisionTable(item)}
+                </Box>
+            </>
         )}
           
         </Paper>
