@@ -31,6 +31,7 @@ import { useParams } from 'react-router-dom';
 import { toast } from "react-toastify";
 import { updateAnyUserState, loginUser } from "../../store/actions/userActions";
 import { connect } from "react-redux";
+import { InfinitySpin } from "react-loader-spinner";
 
 const styles = {
   root: {
@@ -648,17 +649,10 @@ renderTenderTable = (item) => (
     return (
       <div style={{ padding: '2rem', marginTop:'70px' }}>
         <Grid container spacing={3}>
+          
           <Grid item xs={12} md={8}>
             <Paper style={{ padding: '2rem' }}>
-              {!item?.tender_info?.complete && (
-                  <div style={{display: 'flex',
-                    alignItems: 'right',
-                    justifyContent: 'right',
-                    }}>
-                    <CircularProgress />
-                    <Typography variant="h6" style={{marginLeft:'10px', marginTop:'10px'}}>Processing Data...</Typography>
-                  </div>
-                )}
+              
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
                     <img src={Frame2} alt="crane1" style={{ width: '100%',  borderRadius: '25px'}} />
@@ -678,8 +672,29 @@ renderTenderTable = (item) => (
                   </Grid>
                 </Grid>
                 
-                <Grid item xs={12} md={6} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <Typography variant="h1" gutterBottom >
+                <Grid item xs={12} md={6} style={{ position: 'relative'  }}>
+                  {!item?.tender_info?.complete && (
+                  <div style={{position: 'absolute',
+                      top: '10px', // Adjust top position as needed
+                      right: '10px', // Adjust right position as needed
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '10px', // Adjust this value for spacing
+                      background: 'rgba(255, 255, 255, 0.7)', // Adjust background color and opacity
+                      borderRadius: '5px', // Adjust border radius if needed
+                    }}>
+                    <InfinitySpin
+                      width="200"
+                      color="#07172E"
+                      ariaLabel="loading"
+                      wrapperStyle
+                      wrapperClass
+                    />
+                    <Typography variant="h4" style={{padding: '38px 0px'}}>Processing Data...</Typography>
+                  </div>
+                )}
+                  <Typography variant="h1" gutterBottom style={{ marginTop:'180px' }}>
                     {item && item.tender_info && item.tender_info?.tender_number}
                   </Typography>
                   
