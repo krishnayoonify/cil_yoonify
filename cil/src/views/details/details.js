@@ -16,12 +16,19 @@ import {
   Select,
   FormControl,
   InputLabel,
-  Modal, Backdrop, Fade,Box,TextField,
+  Modal, Backdrop, Fade,Box,TextField,IconButton
 } from '@mui/material';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { Info, Link as LinkIcon } from '@mui/icons-material';
 import { UploadFile as UploadIcon } from '@mui/icons-material';
 import CircularProgress from '@mui/material/CircularProgress';
-import Frame1 from './Frame 1000006231.png';
-import Frame2 from './Frame 1000006247.png';
+import Frame1 from './5.jpg';
+import Frame2 from './1.jpg';
+
+import Frame2N from './2. Office team is working.jpg';
+import Frame3N from './3. AI Enabled system.png';
+import Frame4N from './4. Dashboard.jpg';
 import Frame3 from './Frame 1000006250.png';
 import Frame0 from './f4.png';
 import Frame4 from './joakim-honkasalo-hyj_RRTzJjo-unsplash 1.png';
@@ -32,6 +39,7 @@ import { toast } from "react-toastify";
 import { updateAnyUserState, loginUser } from "../../store/actions/userActions";
 import { connect } from "react-redux";
 import { InfinitySpin } from "react-loader-spinner";
+import * as XLSX from 'xlsx';
 
 const styles = {
   root: {
@@ -107,10 +115,58 @@ const styles = {
     textAlign: 'center',
   },
   modalButton: {
-    marginTop: '20px',
+    margin: '20px 0',
     backgroundColor:'rgb(255, 107, 0)'
-  }
+  },
+  modalStyle: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 700,
+    backgroundColor: 'white',
+    boxShadow: 24,
+    padding: '16px 32px 24px',
+  },
+  exportButton: {
+    margin: '-20px 0 15px 0px',
+    backgroundColor: 'rgb(255, 107, 0)',
+    float:'right'
+  },
 };
+// const exportToExcel = (data, filename, div_id) => {
+//   const worksheet = XLSX.utils.json_to_sheet(data);
+//   const workbook = XLSX.utils.book_new();
+//   XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+//   XLSX.writeFile(workbook, `${filename}.xlsx`);
+// };
+const exportToExcel = (lastVendor, filename, div_id) => {
+
+    const input = document.getElementById(div_id);
+
+    html2canvas(input, { scale: 2 })
+      .then((canvas) => {
+        const imgData = canvas.toDataURL('image/jpeg', 1.0); // Use JPEG format with higher quality
+        const pdf = new jsPDF('p', 'mm', 'a4'); // Adjust page dimensions as per your requirement
+        const imgWidth = 210; // A4 page width in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let position = 0;
+        let heightLeft = imgHeight;
+
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdf.internal.pageSize.height;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pdf.internal.pageSize.height;
+        }
+
+        pdf.save(`${filename}.pdf`);
+      });
+  };
 class Content extends React.Component {
   constructor(props) {
     super(props);
@@ -118,11 +174,16 @@ class Content extends React.Component {
       // companyName: '',
       // criteria: '',
       item: {},
-      uniqueid: localStorage.getItem('uniqueid'),//2aa84753-03f1-4bc0-aa61-a40ea82bdee2//'d8204704-e24b-432a-a429-6f2e4838efe0',//
+      uniqueid: 'b5a0b929-0b2e-47b9-8b3e-a976752c5210', //localStorage.getItem('uniqueid'),//2aa84753-03f1-4bc0-aa61-a40ea82bdee2//'d8204704-e24b-432a-a429-6f2e4838efe0',//
       modalOpen: false,
       selectedFile: null,
       selectedTab: 0,
       selectedVendor: '',
+      open: false,
+      modalContent: '',
+      modalURL: '',
+      modalURLName:'',
+      percentage: 100,
     };
   }
 
@@ -132,7 +193,39 @@ class Content extends React.Component {
       .then(response => response.json())
       .then(data => {
         this.setState({ item: data.item });
+        // debugger;
         console.log(data);
+        // data.item.vendors?.forEach((vendor) => {
+        //   for (const criteriaId in vendor.responses) {
+        //     vendor.responses[criteriaId].category_complete
+        //     debugger;
+        //   } 
+        // });
+        if (data.item.vendors && data.item.vendors.length > 0) {
+          const lastVendor = data.item.vendors[data.item.vendors.length - 1];
+          for (const criteriaId in lastVendor.responses) {
+            const responses = lastVendor.responses;
+
+            let trueCount = 0;
+            let totalCount = 0;
+
+            // Iterate over responses
+            for (const criteriaId in responses) {
+              totalCount++;
+              if (responses[criteriaId].category_complete === true) {
+                trueCount++;
+              }
+            }
+
+            // Calculate percentage
+            let percentage = 0;
+            if (totalCount > 0) {
+              percentage = (trueCount / totalCount) * 100;
+            }
+            this.setState({percentage:percentage})
+          } 
+          
+        }
       })
       .catch(error => {
         console.error('Error fetching tender data:', error);
@@ -163,6 +256,13 @@ class Content extends React.Component {
 
   handleCloseModal = () => {
     this.setState({ modalOpen: false });
+  };
+  handleOpen = (content, url, name) => {
+    this.setState({ open: true, modalContent: content, modalURL: url, modalURLName:name });
+  };
+
+  handleClose = () => {
+    this.setState({ open: false, modalContent: '', modalURL: '', modalURLName:'' });
   };
 
   handleFileChange = (event) => {
@@ -222,412 +322,445 @@ class Content extends React.Component {
 handleTabChange = (event, newValue) => {
     this.setState({ selectedTab: newValue });
   };
-  // renderTendor = (requirements) => (
-  //   <TableContainer component={Paper} style={{ borderRadius: '15px', overflow: 'hidden', boxShadow:'15px 14px 20px 0 #00000057' }}>
-  //     <Table>
-  //       <TableHead>
-  //         <TableRow>
-  //           <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderRadius: '15px 0 0 0' }}>
-  //             Criteria ID
-  //           </TableCell>
-  //           <TableCell sx={{ backgroundColor: '#0E1635', color: 'white' }}>Eligibility</TableCell>
-  //           <TableCell sx={{ backgroundColor: '#0E1635', color: 'white' }}>Commercial</TableCell>
-  //           <TableCell sx={{ backgroundColor: '#0E1635', color: 'white' }}>Technical</TableCell>
-  //           <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderRadius: '0 15px 0 0' }}>Provenness</TableCell>
-  //         </TableRow>
-  //       </TableHead>
-  //       <TableBody>
-  //         {requirements?.eligibility.map((eligibilityCriteria) => {
-  //           const eligibilityCriteriaIdParts = eligibilityCriteria.criteria_id.split('.');
-  //           const commercialCriteria = requirements.commercial.find(
-  //             (commercialCriteria) => commercialCriteria.criteria_id.split('.')[1] === eligibilityCriteriaIdParts[1]
-  //           );
-  //           const technicalCriteria = requirements.technical.find(
-  //             (technicalCriteria) => technicalCriteria.criteria_id.split('.')[1] === eligibilityCriteriaIdParts[1]
-  //           );
-  //           const provennessCriteria = requirements.provenness.find(
-  //             (provennessCriteria) => provennessCriteria.criteria_id.split('.')[1] === eligibilityCriteriaIdParts[1]
-  //           );
 
-  //           return (
-  //             <TableRow key={eligibilityCriteria.criteria_id}>
-  //               <TableCell>{eligibilityCriteriaIdParts[1]}</TableCell>
-  //               <TableCell>{eligibilityCriteria.criteria_description}</TableCell>
-  //               <TableCell>{commercialCriteria ? commercialCriteria.criteria_description : '-'}</TableCell>
-  //               <TableCell>{technicalCriteria ? technicalCriteria.criteria_description : '-'}</TableCell>
-  //               <TableCell>{provennessCriteria ? provennessCriteria.criteria_description : '-'}</TableCell>
-  //             </TableRow>
-  //           );
-  //         })}
-  //       </TableBody>
-  //     </Table>
-  //   </TableContainer>
-  // );
-  // renderVendorTable = (item) => (
-  //   <>
-  //     <FormControl fullWidth variant="outlined" style={{ marginBottom: '16px' }}>
-  //       <InputLabel id="vendor-select-label">Vendor Name</InputLabel>
-  //       <Select
-  //         labelId="vendor-select-label"
-  //         id="vendor-select"
-  //         value={this.state.selectedVendor}
-  //         onChange={this.handleVendorChange}
-  //         label="Vendor Name"
-  //       >
-  //         {item.vendors.map((vendor, index) => (
-  //           <MenuItem key={index} value={vendor?.vendor_name}>
-  //             {vendor?.vendor_name}
-  //           </MenuItem>
-  //         ))}
-  //       </Select>
-  //     </FormControl>
-  //     <TableContainer component={Paper} style={{ borderRadius: '15px', overflow: 'hidden', boxShadow:'15px 14px 20px 0 #00000057' }}>
-  //       <Table>
-  //         <TableHead>
-  //           <TableRow>
-  //             <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderRadius: '15px 0 0 0' }}>Tender Number</TableCell>
-  //             <TableCell sx={{ backgroundColor: '#0E1635', color: 'white' }}>Vendor Name</TableCell>
-  //             <TableCell sx={{ backgroundColor: '#0E1635', color: 'white' }}>Criteria ID</TableCell>
-  //             <TableCell sx={{ backgroundColor: '#0E1635', color: 'white' }}>Criteria Description</TableCell>
-  //             <TableCell sx={{ backgroundColor: '#0E1635', color: 'white' }}>Response</TableCell>
-  //             <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderRadius: '0 15px 0 0' }}>Evaluation Results</TableCell>
-  //           </TableRow>
-  //         </TableHead>
-  //         <TableBody>
-  //           {item.vendors
-  //             .filter((vendor) => this.state.selectedVendor === '' || vendor?.vendor_name === this.state.selectedVendor)
-  //             .flatMap((vendor, index) =>
-  //               vendor?.responses?.eligibility?.map((response, responseIndex) => {
-  //                 const criteria = item.tender_info.requirements.eligibility.find((c) => c.criteria_id === response.criteria_id);
-  //                 return (
-  //                   <TableRow key={`${index}-${responseIndex}`} style={{ borderBottom: '1px solid #000' }}>
-  //                     <TableCell>{item && item.tender_info && item.tender_info.tender_number}</TableCell>
-  //                     <TableCell>{vendor?.vendor_name}</TableCell>
-  //                     <TableCell>{response.criteria_id}</TableCell>
-  //                     <TableCell>{criteria?.criteria_description}</TableCell>
-  //                     <TableCell>{response.response}</TableCell>
-  //                     <TableCell>{response.result ? (
-  //                       <span
-  //                         style={{
-  //                           display: 'inline-block',
-  //                           padding: '2px 8px',
-  //                           borderRadius: '5px',
-  //                           backgroundColor: response.result === 'Met' ? 'green' : 'red',
-  //                           color: 'white',
-  //                         }}
-  //                       >
-  //                         {response.result}
-  //                       </span>
-  //                     ) : (
-  //                       '-'
-  //                     )}</TableCell>
-  //                   </TableRow>
-  //                 );
-  //               })
-  //             )}
-  //         </TableBody>
-  //       </Table>
-  //     </TableContainer>
-  //   </>
-  // );
-renderTenderTable = (item) => (
-    
+renderTenderTable = (item) => {
+  const extractTableData = () => {
+    const tableData = [];
+    if (item?.tender_info?.tender_summary) {
+      tableData.push({
+        Criteria: "Overall Summary",
+        "Sub Category": "",
+        Summary: item.tender_info.tender_summary
+      });
+    }
+    Object.keys(item?.tender_info?.requirements || {}).forEach((category) => {
+      item.tender_info.requirements[category].forEach((criteria) => {
+        tableData.push({
+          Criteria: `${category.toUpperCase()} (${criteria.criteria_id})`,
+          "Sub Category": criteria.criteria_subcategory,
+          Summary: criteria.criteria_description
+        });
+      });
+    });
+    return tableData;
+  };
+
+  return (
     <>
-       <TableContainer component={Paper} style={{ borderRadius: '15px', overflow: 'scroll', maxHeight: '700px', boxShadow: '15px 14px 20px 0 #00000057' }}>
-      <Table stickyHeader>
-        <TableHead>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => exportToExcel(extractTableData(), 'Tender Table', 'tender-table')}
+        style={styles.exportButton}
+      >
+        Export to PDF
+      </Button>
+      <TableContainer component={Paper} style={{ borderRadius: '15px', overflow: 'scroll', boxShadow: '15px 14px 20px 0 #00000057', width: '100%',height: '100%', borderCollapse: 'collapse' }} id="tender-table">
+      {/* //maxHeight: '700px', */}
+        <Table stickyHeader>
+          <TableHead>
             <TableRow>
-              {item?.tender_info?.requirements && 
-                <><TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria</TableCell>
-                <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Sub Category</TableCell>
-            <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell></>}
-          </TableRow>
-        </TableHead>
-        <TableBody>
+              {item?.tender_info?.requirements &&
+                <>
+                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria</TableCell>
+                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Sub Category</TableCell>
+                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell>
+                </>
+              }
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {item?.tender_info?.tender_summary && <TableRow>
-              <TableCell ><b>Overall Summary</b></TableCell>
-              <TableCell ></TableCell>
-              <TableCell >{item?.tender_info?.tender_summary}</TableCell>
-              {/* <TableCell >-</TableCell>
-              <TableCell >-</TableCell>
-              <TableCell >-</TableCell>
-              <TableCell >-</TableCell> */}
+              <TableCell><b>Overall Summary</b></TableCell>
+              <TableCell></TableCell>
+              <TableCell>{item?.tender_info?.tender_summary}</TableCell>
             </TableRow>}
             {Object.keys(item?.tender_info?.requirements || {}).flatMap((category) =>
-            
-            item?.tender_info?.requirements[category]?.map((criteria, criteriaIndex) => {
-              
-              return (
+              item?.tender_info?.requirements[category]?.map((criteria, criteriaIndex) => (
                 <TableRow key={`${category}-${criteriaIndex}`} style={{ borderBottom: '1px solid #000' }}>
                   <TableCell><b>{category.toUpperCase()} ({criteria?.criteria_id})</b></TableCell>
                   <TableCell>{criteria?.criteria_subcategory}</TableCell>
                   <TableCell>{criteria?.criteria_description}</TableCell>
-                  
                 </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-
-
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </>
   );
-   
-  renderComparisionTable = (item) => (
-    
+};
+  renderComparisionTable = (item) => {
+  const { open, modalContent, modalURL, modalURLName } = this.state;
+
+  const extractTableData = () => {
+    const tableData = [];
+    Object.keys(item?.tender_info?.requirements || {}).forEach((category) => {
+      item.tender_info.requirements[category].forEach((criteria) => {
+        const row = {
+          Criteria: `${category.toUpperCase()} (${criteria.criteria_id})`,
+          "Sub Category": criteria.criteria_subcategory,
+          Summary: criteria.criteria_description,
+        };
+        item.vendors?.forEach((vendor) => {
+          for (const criteriaId in vendor.responses[category].data) {
+            if (criteriaId === criteria.criteria_id) {
+                const response = vendor.responses[category].data[criteriaId]
+                row[`${vendor.vendor_name} (Response)`] = response?.response || '-';
+                row[`${vendor.vendor_name} (Evaluation)`] = response?.result || '-';
+              }
+          } 
+        });
+        tableData.push(row);
+      });
+    });
+    return tableData;
+  };
+
+  return (
     <>
-       <TableContainer component={Paper} style={{ borderRadius: '15px', overflow: 'scroll', maxHeight: '700px', boxShadow: '15px 14px 20px 0 #00000057' }}>
-      <Table stickyHeader>
-        <TableHead>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => exportToExcel(extractTableData(), 'Comparision Table', 'comparision-table')}
+        style={styles.exportButton}
+      >
+        Export to PDF
+      </Button>
+      <TableContainer component={Paper} style={{ borderRadius: '15px', overflow: 'scroll', boxShadow: '15px 14px 20px 0 #00000057', width: '100%',height: '100%', borderCollapse: 'collapse' }} id="comparision-table">
+        <Table stickyHeader>
+          <TableHead>
             <TableRow>
-              {item?.tender_info?.requirements && 
-                <><TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria</TableCell>
-                <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Sub Category</TableCell>
-            <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell></>}
-            {item?.vendors?.map((vendor, index) => (
-              <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
-                {vendor?.vendor_name} (Response)
-              </TableCell>
-            ))}
-            {item?.vendors?.map((vendor, index) => (
-              <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
-                {vendor?.vendor_name} (Evaluation)
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-            
+              {item?.tender_info?.requirements &&
+                <>
+                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria</TableCell>
+                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Sub Category</TableCell>
+                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell>
+                </>
+              }
+              {item?.vendors?.map((vendor, index) => (
+                <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
+                  {vendor?.vendor_name} (Response)
+                </TableCell>
+              ))}
+              {item?.vendors?.map((vendor, index) => (
+                <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
+                  {vendor?.vendor_name} (Evaluation)
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {Object.keys(item?.tender_info?.requirements || {}).flatMap((category) =>
-            
-            item?.tender_info?.requirements[category]?.map((criteria, criteriaIndex) => {
-              
-              return (
+              item?.tender_info?.requirements[category]?.map((criteria, criteriaIndex) => (
                 <TableRow key={`${category}-${criteriaIndex}`} style={{ borderBottom: '1px solid #000' }}>
                   <TableCell><b>{category.toUpperCase()} ({criteria?.criteria_id})</b></TableCell>
                   <TableCell>{criteria?.criteria_subcategory}</TableCell>
                   <TableCell>{criteria?.criteria_description}</TableCell>
                   {item?.vendors?.map((vendor, vendorIndex) => {
-                    const response = vendor?.responses?.[category]?.find((r) => r.criteria_id === criteria?.criteria_id);
-
-                    const formatResponse = (res) => {
-                      if (typeof res === 'string') {
-                        return res;
-                      } else if (res && typeof res === 'object') {
-                        return '-';//JSON.stringify(res, null, 2);
-                      } else {
-                        return '-';
-                      }
-                    };
-                    
+                    for (const criteriaId in vendor.responses[category].data) {
+                      if (criteriaId === criteria.criteria_id) {
+                        const response = vendor.responses[category].data[criteriaId];
+                        const formatResponse = (res) => {
+                            if (typeof res === 'string') {
+                              return res;
+                            } else if (res && typeof res === 'object') {
+                              return '-';
+                            } else {
+                              return '-';
+                            }
+                          };
+                          return (
+                            <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-${criteria.criteria_id}`}>
+                              {formatResponse(response?.response)}
+                              <IconButton onClick={() => this.handleOpen(response?.related_content, response?.url, response?.file_name)}>
+                                <Info />
+                              </IconButton>
+                            </TableCell>
+                          );
+                        }
+                    }
                     // const response = vendor?.responses?.[category]?.find((r) => r.criteria_id === criteria?.criteria_id);
-                    return (
-                      <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-${category}`}>
-                        {formatResponse(response?.response)}
-                      </TableCell>
-                    );
+                    // const formatResponse = (res) => {
+                    //   if (typeof res === 'string') {
+                    //     return res;
+                    //   } else if (res && typeof res === 'object') {
+                    //     return '-';
+                    //   } else {
+                    //     return '-';
+                    //   }
+                    // };
+                    // return (
+                    //   <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-${category}`}>
+                    //     {formatResponse(response?.response)}
+                    //     <IconButton onClick={() => this.handleOpen(response?.related_content, response?.url)}>
+                    //       <Info />
+                    //     </IconButton>
+                    //   </TableCell>
+                    // );
                   })}
                   {item?.vendors?.map((vendor, vendorIndex) => {
-                    const evaluation = vendor?.responses?.[category]?.find((r) => r.criteria_id === criteria?.criteria_id);
-                    return (
-                      <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-${category}-evaluation`}>
+                    // const evaluation = vendor?.responses?.[category]?.find((r) => r.criteria_id === criteria?.criteria_id);
+                    // return (
+                    //   <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-${category}-evaluation`}>
+                    //     {evaluation?.result ? (
+                    //       <span
+                    //         style={{
+                    //           display: 'flex',
+                    //           alignItems: 'center',
+                    //           justifyContent: 'center',
+                    //           padding: '2px 8px',
+                    //           borderRadius: '5px',
+                    //           width: '120px',
+                    //           height:'60px',
+                    //           backgroundColor: evaluation.result === 'MET' ? 'green' :
+                    //             evaluation.result === 'PARTIALLY MET' ? 'orange' :
+                    //               evaluation.result === 'NOT MET' ? 'red' :
+                    //                 evaluation.result === 'INSUFFICIENT INFO' ? 'gray' :
+                    //                   'transparent',
+                    //           color: 'white',
+                    //         }}
+                    //       >
+                    //         {evaluation.result}
+                    //       </span>
+                    //     ) : (
+                    //       '-'
+                    //     )}
+                    //   </TableCell>
+                    // );
+                    for (const criteriaId in vendor.responses[category].data) {
+                      if (criteriaId === criteria.criteria_id) {
+                        const evaluation = vendor.responses[category].data[criteriaId]
+                        return (
+                      <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-${criteria.criteria_id}-evaluation`}>
                         {evaluation?.result ? (
                           <span
                             style={{
-                              display: 'inline-block',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
                               padding: '2px 8px',
                               borderRadius: '5px',
+                              width: '120px',
+                              height:'60px',
                               backgroundColor: evaluation.result === 'MET' ? 'green' :
-                         evaluation.result === 'PARTIALLY MET' ? 'orange' :
-                         evaluation.result === 'NOT MET' ? 'red' :
-                         evaluation.result === 'INSUFFICIENT INFO' ? 'gray' :
-                         'transparent',
+                                evaluation.result === 'PARTIALLY MET' ? 'orange' :
+                                  evaluation.result === 'NOT MET' ? 'red' :
+                                    evaluation.result === 'INSUFFICIENT INFO' ? 'gray' :
+                                      'transparent',
                               color: 'white',
                             }}
                           >
-                            {evaluation.result} 
+                            {evaluation.result}
                           </span>
                         ) : (
                           '-'
                         )}
                       </TableCell>
                     );
+                        }
+                    }
                   })}
                 </TableRow>
-              );
-            })
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Modal
+        open={open}
+        onClose={this.handleClose}
+        aria-labelledby="simple-modal-title"
+        aria-describedby="simple-modal-description"
+      >
+        <Box style={styles.modalStyle}>
+          <h2 id="simple-modal-title">Source of Content</h2>
+          <p id="simple-modal-description">{modalContent}</p>
+          {modalURL && (
+            <Button variant="contained" color="primary" href={modalURL} target="_blank" style={styles.modalButton}>
+              <LinkIcon style={{marginRight:"10px" }}/> {modalURLName}
+            </Button>
           )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-
-
-    {/* <TableContainer component={Paper} style={{ borderRadius: '15px', overflow: 'hidden', maxHeight: '700px',  boxShadow:'15px 14px 20px 0 #00000057' }}>
-      <Table stickyHeader>
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria ID</TableCell>
-            <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria Description</TableCell>
-            {item.vendors?.map((vendor, index) => (
-              <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
-                {vendor?.vendor_name} (Response)
-              </TableCell>
-            ))}
-            {item.vendors?.map((vendor, index) => (
-              <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
-                {vendor?.vendor_name} (Evaluation)
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {['eligibility', 'provenness', 'technical', 'commercial'].map((category) =>
-            item.tender_info?.requirements[category]?.map((criteria, index) => (
-              <TableRow key={index} style={{ borderBottom: '1px solid #000' }}>
-                <TableCell>{criteria.criteria_id}</TableCell>
-                <TableCell>{criteria.criteria_description}</TableCell>
-                {item.vendors?.map((vendor) => {
-                  const response = vendor?.responses?.[category]?.find((r) => r.criteria_id === criteria.criteria_id);
-                  return <TableCell key={`${vendor?.vendor_name}${category}`}>{response?.response || '-'}</TableCell>;
-                })}
-                {item.vendors?.map((vendor) => {
-                  const evaluation = vendor?.responses?.[category]?.find((r) => r.criteria_id === criteria.criteria_id);
-                  return (
-                    <TableCell key={`${vendor?.vendor_name}${category}evaluation`}>
-                      {evaluation?.result ? (
-                        <span
-                          style={{
-                            display: 'inline-block',
-                            padding: '2px 8px',
-                            borderRadius: '5px',
-                            backgroundColor: evaluation.result === 'Met' ? 'green' : 'red',
-                            color: 'white',
-                          }}
-                        >
-                          {evaluation.result}
-                        </span>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-      </TableContainer> */}
+        </Box>
+      </Modal>
     </>
   );
+};
   groupCriteria = (criteria) => {
-    const grouped = [];
-    if (criteria) {
-      criteria.forEach((criterion) => {
-        let group = grouped.find(g => g[0].criteria_subcategory === criterion.criteria_subcategory);
-        if (!group) {
-          group = [];
-          grouped.push(group);
-        }
-        group.push(criterion);
-      });
+  const grouped = [];
+  if (criteria) {
+    criteria.forEach((criterion) => {
+      let group = grouped.find(g => g[0].criteria_subcategory === criterion.criteria_subcategory);
+      if (!group) {
+        group = [];
+        grouped.push(group);
+      }
+      group.push(criterion);
+    });
     }
-    return grouped;
+  return grouped;
+};
+
+renderTechnicalTable = (item, req_parm) => {
+  const { open, modalContent, modalURL, modalURLName } = this.state;
+  const groupedCriteria = this.groupCriteria(item?.tender_info?.requirements[req_parm]);
+
+  const extractTableData = () => {
+    const tableData = [];
+    groupedCriteria.forEach((group) => {
+      group.forEach((criteria, criteriaIndex) => {
+        const row = {
+          Requirements: criteriaIndex === 0 ? criteria.criteria_subcategory : '',
+          Summary: criteria.criteria_description,
+        };
+        item.vendors?.forEach((vendor) => {
+          for (const criteriaId in vendor.responses[req_parm].data) {
+            if (criteriaId === criteria.criteria_id) {
+                const response = vendor.responses[req_parm].data[criteriaId]
+                row[`${vendor.vendor_name} (Response)`] = response?.response || '-';
+                row[`${vendor.vendor_name} (Evaluation)`] = response?.result || '-';
+              }
+          } 
+          
+          
+        });
+        tableData.push(row);
+      });
+    });
+    return tableData;
   };
-  renderTechnicalTable = (item, req_parm) => {
-    const groupedCriteria = this.groupCriteria(item?.tender_info?.requirements[req_parm]);
 
-    return (
-      <>
-        <TableContainer component={Paper} style={{ borderRadius: '15px', overflow: 'scroll', maxHeight: '700px', boxShadow: '15px 14px 20px 0 #00000057' }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                {item?.tender_info?.requirements && 
-                  <>
-                    {/* <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria</TableCell> */}
-                    <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Requirements</TableCell>
-                    <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell>
-                  </>
-                }
-                {item?.vendors?.map((vendor, index) => (
-                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
-                    {vendor?.vendor_name} (Response)
-                  </TableCell>
-                ))}
-                {item?.vendors?.map((vendor, index) => (
-                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
-                    {vendor?.vendor_name} (Evaluation)
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {groupedCriteria.map((group, groupIndex) => (
-                group.map((criteria, criteriaIndex) => (
-                  <TableRow key={`${criteria.criteria_id}-${criteriaIndex}`} style={{ borderBottom: '1px solid #000' }}>
-                    {criteriaIndex === 0 && (
-                      <TableCell rowSpan={group.length} style={{background:'#eaeaea'}}>
-                        <b>{criteria.criteria_subcategory}</b>
-                      </TableCell>
-                    )}
-                    <TableCell>{criteria.criteria_description}</TableCell>
-                    {item?.vendors?.map((vendor, vendorIndex) => {
-                      const response = vendor?.responses?.[req_parm]?.find((r) => r.criteria_id === criteria.criteria_id);
-
-                      const formatResponse = (res) => {
-                        if (typeof res === 'string') {
-                          return res;
-                        } else if (res && typeof res === 'object') {
-                          return '-'; // JSON.stringify(res, null, 2);
-                        } else {
-                          return '-';
-                        }
-                      };
-
-                      return (
-                        <TableCell key={`${vendor.vendor_name}-${vendorIndex}-${criteria.criteria_id}`}>
-                          {formatResponse(response?.response)}
-                        </TableCell>
-                      );
-                    })}
-                    {item?.vendors?.map((vendor, vendorIndex) => {
-                      const evaluation = vendor?.responses?.[req_parm]?.find((r) => r.criteria_id === criteria.criteria_id);
-                      return (
-                        <TableCell key={`${vendor.vendor_name}-${vendorIndex}-${criteria.criteria_id}-evaluation`}>
-                          {evaluation?.result ? (
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                padding: '2px 8px',
-                                borderRadius: '5px',
-                                backgroundColor: evaluation.result === 'MET' ? 'green' :
-                                evaluation.result === 'PARTIALLY MET' ? 'orange' :
-                                evaluation.result === 'NOT MET' ? 'red' :
-                                evaluation.result === 'INSUFFICIENT INFO' ? 'gray' :
-                                'transparent',
-                                color: 'white',
-                              }}
-                            >
-                              {evaluation.result}
-                            </span>
-                          ) : (
-                            '-'
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))
+  return (
+    <>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => exportToExcel(extractTableData(), req_parm.toUpperCase() + ' Details', req_parm.toUpperCase() + '-div')}
+        style={styles.exportButton}
+      >
+        Export to PDF
+      </Button>
+      <TableContainer component={Paper} style={{ borderRadius: '15px', overflow: 'scroll', boxShadow: '15px 14px 20px 0 #00000057', width: '100%', height: '100%', borderCollapse: 'collapse' }} id={req_parm.toUpperCase() + '-div'}>
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              {item?.tender_info?.requirements &&
+                <>
+                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Requirements</TableCell>
+                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell>
+                </>
+              }
+              
+              {item?.vendors?.map((vendor, index) => (
+                <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
+                  {vendor?.vendor_name} (Response)
+                </TableCell>
               ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </>
-    );
-  };
+              {item?.vendors?.map((vendor, index) => (
+                <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
+                  {vendor?.vendor_name} (Evaluation)
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {groupedCriteria.flatMap((group, groupIndex) =>
+              group.map((criteria, criteriaIndex) => (
+                <TableRow key={`${criteria?.criteria_id}-${criteriaIndex}`} style={{ borderBottom: '1px solid #000' }}>
+                  {criteriaIndex === 0 && (
+                    <TableCell rowSpan={group.length} style={{ verticalAlign: 'middle', fontWeight: 'bold' }}>
+                      {criteria.criteria_subcategory}
+                    </TableCell>
+                  )}
+                  <TableCell>{criteria.criteria_description}</TableCell>
+                  {item?.vendors?.map((vendor, vendorIndex) => {                    
+                    for (const criteriaId in vendor.responses[req_parm].data) {
+                      if (criteriaId === criteria.criteria_id) {
+                        const response = vendor.responses[req_parm].data[criteriaId];
+                        const formatResponse = (res) => {
+                            if (typeof res === 'string') {
+                              return res;
+                            } else if (res && typeof res === 'object') {
+                              return '-';
+                            } else {
+                              return '-';
+                            }
+                          };
+                          return (
+                            <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-${criteria.criteria_id}`}>
+                              {formatResponse(response?.response)}
+                              <IconButton onClick={() => this.handleOpen(response?.related_content, response?.url, response?.file_name)}>
+                                <Info />
+                              </IconButton>
+                            </TableCell>
+                          );
+                        }
+                    }
+                    // const response = vendor?.responses?.[req_parm]?.find((r) => r.criteria_id === criteria?.criteria_id);
+                    
+                  })}
+                  {item?.vendors?.map((vendor, vendorIndex) => {
+                    // const evaluation = vendor?.responses?.[req_parm]?.find((r) => r.criteria_id === criteria?.criteria_id);
+                    // const evaluation = '-'
+                    for (const criteriaId in vendor.responses[req_parm].data) {
+                      if (criteriaId === criteria.criteria_id) {
+                        const evaluation = vendor.responses[req_parm].data[criteriaId]
+                        return (
+                      <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-${criteria.criteria_id}-evaluation`}>
+                        {evaluation?.result ? (
+                          <span
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: '2px 8px',
+                              borderRadius: '5px',
+                              width: '120px',
+                              height:'60px',
+                              backgroundColor: evaluation.result === 'MET' ? 'green' :
+                                evaluation.result === 'PARTIALLY MET' ? 'orange' :
+                                  evaluation.result === 'NOT MET' ? 'red' :
+                                    evaluation.result === 'INSUFFICIENT INFO' ? 'gray' :
+                                      'transparent',
+                              color: 'white',
+                            }}
+                          >
+                            {evaluation.result}
+                          </span>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                    );
+                        }
+                    }
+                    
+                  })}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Modal
+        open={open}
+        onClose={this.handleClose}
+        aria-labelledby="simple-modal-title"
+        aria-describedby="simple-modal-description"
+      >
+        <Box style={styles.modalStyle}>
+          <h2 id="simple-modal-title">Source of Content</h2>
+          <p id="simple-modal-description">{modalContent}</p>
+          {modalURL && (
+            <Button variant="contained" color="primary" href={modalURL} target="_blank" style={styles.modalButton}>
+              <LinkIcon style={{marginRight:"10px" }}/> {modalURLName }
+            </Button>
+          )}
+        </Box>
+      </Modal>
+    </>
+  );
+};
 
   render() {
     const { item } = this.state;
@@ -639,13 +772,12 @@ renderTenderTable = (item) => (
     const hasSummaryData = hasTechnicalDetails || hasCommercialDetails || hasEligibilityDetails || hasProvennessDetails;
 
     const hasVendorData = item?.vendors?.some(vendor => 
-        ['technical', 'commercial', 'eligibility', 'provenness'].some(category =>
-            vendor?.responses?.[category]?.length > 0
+      ['technical', 'commercial', 'eligibility', 'provenness'].some(category =>
+            vendor?.responses?.[category]?.data
         )
     );
 
     const hasComparisonData = (hasTechnicalDetails || hasCommercialDetails || hasEligibilityDetails || hasProvennessDetails) && hasVendorData;
-
     return (
       <div style={{ padding: '2rem', marginTop:'70px' }}>
         <Grid container spacing={3}>
@@ -655,33 +787,37 @@ renderTenderTable = (item) => (
               
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
-                    <img src={Frame2} alt="crane1" style={{ width: '100%',  borderRadius: '25px'}} />
+                    <img src={Frame2} alt="crane1" style={{ width: '94%',  borderRadius: '25px'}} />
                     <Grid container spacing={2} style={{marginTop:'0px'}}>
                         <Grid item>
                         <img src={Frame2} alt="crane2" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                         </Grid>
                         <Grid item>
-                        <img src={Frame4} alt="crane3" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                        <img src={Frame2N} alt="crane3" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                         </Grid>
                         <Grid item>
-                        <img src={Frame3} alt="crane4" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                        <img src={Frame3N} alt="crane4" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                         </Grid>
                         <Grid item>
-                        <img src={Frame1} alt="crane5" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                        <img src={Frame4N} alt="crane5" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                         </Grid>
                   </Grid>
                 </Grid>
                 
-                <Grid item xs={12} md={6} style={{ position: 'relative'  }}>
-                  {!item?.tender_info?.complete && (
+                <Grid item xs={12} md={6} style={{ position: 'relative' }}>
+                  <Typography variant="h1" gutterBottom style={{ marginTop:'100px' }}>
+                    {item && item.tender_info && item.tender_info?.tender_number}
+                  </Typography>
+                  {!item?.tender_info?.complete ||  this.state.percentage != 100 ?
                   <div style={{position: 'absolute',
-                      top: '10px', // Adjust top position as needed
+                      bottom: '-60px', // Adjust top position as needed
                       right: '10px', // Adjust right position as needed
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      // marginTop:'60px',
                       padding: '10px', // Adjust this value for spacing
-                      background: 'rgba(255, 255, 255, 0.7)', // Adjust background color and opacity
+                      // background: 'rgba(255, 255, 255, 0.7)', // Adjust background color and opacity
                       borderRadius: '5px', // Adjust border radius if needed
                     }}>
                     <InfinitySpin
@@ -691,12 +827,10 @@ renderTenderTable = (item) => (
                       wrapperStyle
                       wrapperClass
                     />
-                    <Typography variant="h4" style={{padding: '38px 0px'}}>Processing Data...</Typography>
+                      <Typography variant="h4" style={{ padding: '38px 0px' }}>{ this.state.percentage != 100 ? this.state.percentage + '% complete': "Processing Data..." }</Typography>
                   </div>
-                )}
-                  <Typography variant="h1" gutterBottom style={{ marginTop:'180px' }}>
-                    {item && item.tender_info && item.tender_info?.tender_number}
-                  </Typography>
+                : <></>}
+                  
                   
                   {/* <Typography variant="body2" gutterBottom style={{background: '#cdc5c55c',width: '146px', borderRadius: '35px',textAlign: 'center',padding: '10px', margin:'20px 0',  boxShadow:'5px 5px 5px 0 #00000057'}}>
                     {item && item.vendors && item.vendors.length} Bid Responses
