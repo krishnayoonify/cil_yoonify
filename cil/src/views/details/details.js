@@ -15,7 +15,7 @@ import {
   MenuItem,
   Select,
   FormControl,
-  InputLabel,
+  InputLabel,LinearProgress,
   Modal, Backdrop, Fade,Box,TextField,IconButton
 } from '@mui/material';
 import jsPDF from 'jspdf';
@@ -174,7 +174,7 @@ class Content extends React.Component {
       // companyName: '',
       // criteria: '',
       item: {},
-      uniqueid: localStorage.getItem('uniqueid'),//2aa84753-03f1-4bc0-aa61-a40ea82bdee2//'d8204704-e24b-432a-a429-6f2e4838efe0',//'b5a0b929-0b2e-47b9-8b3e-a976752c5210', //
+      uniqueid: 'b5a0b929-0b2e-47b9-8b3e-a976752c5210',//localStorage.getItem('uniqueid'),//2aa84753-03f1-4bc0-aa61-a40ea82bdee2//'d8204704-e24b-432a-a429-6f2e4838efe0',//'', //
       modalOpen: false,
       selectedFile: null,
       selectedTab: 0,
@@ -438,11 +438,11 @@ renderTenderTable = (item) => {
                   <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell>
                 </>
               }
-              {item?.vendors?.map((vendor, index) => (
+              {/* {item?.vendors?.map((vendor, index) => (
                 <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
                   {vendor?.vendor_name} (Response)
                 </TableCell>
-              ))}
+              ))} */}
               {item?.vendors?.map((vendor, index) => (
                 <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }} key={index}>
                   {vendor?.vendor_name} (Evaluation)
@@ -457,7 +457,7 @@ renderTenderTable = (item) => {
                   <TableCell><b>{category.toUpperCase()} ({criteria?.criteria_id})</b></TableCell>
                   <TableCell>{criteria?.criteria_subcategory}</TableCell>
                   <TableCell>{criteria?.criteria_description}</TableCell>
-                  {item?.vendors?.map((vendor, vendorIndex) => {
+                  {/* {item?.vendors?.map((vendor, vendorIndex) => {
                     for (const criteriaId in vendor.responses[category].data) {
                       if (criteriaId === criteria.criteria_id) {
                         const response = vendor.responses[category].data[criteriaId];
@@ -473,9 +473,9 @@ renderTenderTable = (item) => {
                           return (
                             <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-${criteria.criteria_id}`}>
                               {formatResponse(response?.response)}
-                              <IconButton onClick={() => this.handleOpen(response?.related_content, response?.url, response?.file_name)}>
+                              <span onClick={() => this.handleOpen(response?.related_content, response?.url, response?.file_name)} style={{padding:'0'}}>
                                 <Info />
-                              </IconButton>
+                              </span>
                             </TableCell>
                           );
                         }
@@ -498,7 +498,7 @@ renderTenderTable = (item) => {
                     //     </IconButton>
                     //   </TableCell>
                     // );
-                  })}
+                  })} */}
                   {item?.vendors?.map((vendor, vendorIndex) => {
                     // const evaluation = vendor?.responses?.[category]?.find((r) => r.criteria_id === criteria?.criteria_id);
                     // return (
@@ -574,7 +574,7 @@ renderTenderTable = (item) => {
         aria-describedby="simple-modal-description"
       >
         <Box style={styles.modalStyle}>
-          <h2 id="simple-modal-title">Source of Content</h2>
+          <h2 id="simple-modal-title">Extracted from { modalURLName}</h2>
           <p id="simple-modal-description">{modalContent}</p>
           {modalURL && (
             <Button variant="contained" color="primary" href={modalURL} target="_blank" style={styles.modalButton}>
@@ -689,8 +689,8 @@ renderTechnicalTable = (item, req_parm) => {
                           return (
                             <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-${criteria.criteria_id}`}>
                               {formatResponse(response?.response)}
-                              <IconButton onClick={() => this.handleOpen(response?.related_content, response?.url, response?.file_name)}>
-                                <Info />
+                              <IconButton onClick={() => this.handleOpen(response?.related_content, response?.url, response?.file_name)} style={{padding:'0'}}>
+                                <Info  style={{padding:'0'}}/>
                               </IconButton>
                             </TableCell>
                           );
@@ -749,7 +749,7 @@ renderTechnicalTable = (item, req_parm) => {
         aria-describedby="simple-modal-description"
       >
         <Box style={styles.modalStyle}>
-          <h2 id="simple-modal-title">Source of Content</h2>
+          <h2 id="simple-modal-title">Extracted from  { modalURLName}</h2>
           <p id="simple-modal-description">{modalContent}</p>
           {modalURL && (
             <Button variant="contained" color="primary" href={modalURL} target="_blank" style={styles.modalButton}>
@@ -796,10 +796,11 @@ renderTechnicalTable = (item, req_parm) => {
                         <img src={Frame2N} alt="crane3" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                         </Grid>
                         <Grid item>
-                        <img src={Frame3N} alt="crane4" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                        <img src={Frame4N} alt="crane5" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow: '15px 14px 20px 0 #00000057' }} />
                         </Grid>
                         <Grid item>
-                        <img src={Frame4N} alt="crane5" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                      
+                      <img src={Frame3N} alt="crane4" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                         </Grid>
                   </Grid>
                 </Grid>
@@ -808,8 +809,26 @@ renderTechnicalTable = (item, req_parm) => {
                   <Typography variant="h1" gutterBottom style={{ marginTop:'100px' }}>
                     {item && item.tender_info && item.tender_info?.tender_number}
                   </Typography>
-                  {!item?.tender_info?.complete ||  this.state.percentage != 100 ?
+                  {this.state.percentage != 100 ?
                   <div style={{position: 'absolute',
+                      bottom: '-30px', // Adjust top position as needed
+                      right: '10px', // Adjust right position as needed
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      // marginTop:'60px',
+                      padding: '10px', // Adjust this value for spacing
+                      // background: 'rgba(255, 255, 255, 0.7)', // Adjust background color and opacity
+                      borderRadius: '5px', // Adjust border radius if needed
+                    }}>
+                    <Box sx={{ width: '100px', mb: 1 }}>
+                      <LinearProgress variant="determinate" value={this.state.percentage} />
+                    </Box>
+                    <h4 style={{maringTop:'5px', marginLeft:'10px'}}>
+                      {this.state.percentage + '% complete'}
+                    </h4>
+                  </div>
+                : !item?.tender_info?.complete ? <div style={{position: 'absolute',
                       bottom: '-60px', // Adjust top position as needed
                       right: '10px', // Adjust right position as needed
                       display: 'flex',
@@ -827,9 +846,8 @@ renderTechnicalTable = (item, req_parm) => {
                       wrapperStyle
                       wrapperClass
                     />
-                      <Typography variant="h4" style={{ padding: '38px 0px' }}>{ this.state.percentage != 100 ? this.state.percentage + '% complete': "Processing Data..." }</Typography>
-                  </div>
-                : <></>}
+                      <Typography variant="h4" style={{ padding: '38px 0px' }}>"Processing Data..." </Typography>
+                  </div>: <></> }
                   
                   
                   {/* <Typography variant="body2" gutterBottom style={{background: '#cdc5c55c',width: '146px', borderRadius: '35px',textAlign: 'center',padding: '10px', margin:'20px 0',  boxShadow:'5px 5px 5px 0 #00000057'}}>
@@ -855,18 +873,19 @@ renderTechnicalTable = (item, req_parm) => {
                   <Grid item xs={6} mt={2} style={{ textAlign: 'right' }}>
                     <Typography variant="h5">{item && item.tender_info && item.tender_info?.tender_date}</Typography>
                   </Grid>
-                  {item && item.tender_info && item.tender_info?.tender_deposit && <Grid item xs={6} mt={2}>
-                    <Typography variant="body2" fontWeight='Bold'>Tender Deposit:</Typography>
-                  </Grid>}
-                  <Grid item xs={6} mt={2} style={{ textAlign: 'right' }}>
-                    <Typography variant="h5">{item && item.tender_info && item.tender_info?.tender_deposit}</Typography>
-                  </Grid>
                   {item && item.tender_info && item.tender_info?.tender_value && <Grid item xs={6} mt={2}>
                     <Typography variant="body2" fontWeight='Bold'>Tender Value:</Typography>
                   </Grid>}
                       <Grid item xs={6} mt={2} style={{ textAlign: 'right' }}>
                         <Typography variant="h5">{item && item.tender_info && item.tender_info?.tender_value}</Typography>
                       </Grid>
+                  {item && item.tender_info && item.tender_info?.tender_deposit && <Grid item xs={6} mt={2}>
+                    <Typography variant="body2" fontWeight='Bold'>Tender Deposit:</Typography>
+                  </Grid>}
+                  <Grid item xs={6} mt={2} style={{ textAlign: 'right' }}>
+                    <Typography variant="h5">{item && item.tender_info && item.tender_info?.tender_deposit}</Typography>
+                  </Grid>
+                  
                     </Grid>
                     
                     
