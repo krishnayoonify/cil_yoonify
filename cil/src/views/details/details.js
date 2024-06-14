@@ -174,7 +174,7 @@ class Content extends React.Component {
       // companyName: '',
       // criteria: '',
       item: {},
-      uniqueid: 'b5a0b929-0b2e-47b9-8b3e-a976752c5210', //localStorage.getItem('uniqueid'),//2aa84753-03f1-4bc0-aa61-a40ea82bdee2//'d8204704-e24b-432a-a429-6f2e4838efe0',//
+      uniqueid: localStorage.getItem('uniqueid'),//2aa84753-03f1-4bc0-aa61-a40ea82bdee2//'d8204704-e24b-432a-a429-6f2e4838efe0',//'b5a0b929-0b2e-47b9-8b3e-a976752c5210', //
       modalOpen: false,
       selectedFile: null,
       selectedTab: 0,
