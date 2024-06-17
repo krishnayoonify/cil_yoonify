@@ -661,21 +661,27 @@ renderComparisionTable = (item) => {
             <Paper style={{ padding: '2rem' }}>
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
-                  <img src={Frame2} alt="crane1" style={{ width: '94%',  borderRadius: '25px'}} />
-                  <Grid container spacing={2} style={{marginTop:'0px'}}>
+                  <img src={Frame2} alt="crane1" style={{ width: '100%', borderRadius: '25px' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'nowrap' }}>
+                    <img src={Frame2} alt="crane2" style={{ width: '24%', height: '80px', borderRadius: '8px', boxShadow: '15px 14px 20px 0 #00000057', marginRight:'5px' }} />
+                    <img src={Frame2N} alt="crane3" style={{ width: '24%', height: '80px', borderRadius: '8px', boxShadow: '15px 14px 20px 0 #00000057', marginRight:'5px' }} />
+                    <img src={Frame4N} alt="crane5" style={{ width: '24%', height: '80px', borderRadius: '8px', boxShadow: '15px 14px 20px 0 #00000057', marginRight:'5px' }} />
+                    <img src={Frame3N} alt="crane4" style={{ width: '24%', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                  </div>
+                  {/* <Grid container spacing={2} style={{marginTop:'0px'}}>
                     <Grid item>
-                      <img src={Frame2} alt="crane2" style={{ width: '110px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                      <img src={Frame2} alt="crane2" style={{ width: '25%', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                     </Grid>
                     <Grid item>
-                      <img src={Frame2N} alt="crane3" style={{ width: '110px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                      <img src={Frame2N} alt="crane3" style={{ width: '25%', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                     </Grid>
                     <Grid item>
-                      <img src={Frame4N} alt="crane5" style={{ width: '110px', height: '80px', borderRadius: '8px', boxShadow: '15px 14px 20px 0 #00000057' }} />
+                      <img src={Frame4N} alt="crane5" style={{ width: '25%', height: '80px', borderRadius: '8px', boxShadow: '15px 14px 20px 0 #00000057' }} />
                     </Grid>
                     <Grid item>
-                      <img src={Frame3N} alt="crane4" style={{ width: '110px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                      <img src={Frame3N} alt="crane4" style={{ width: '25%', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                     </Grid>
-                  </Grid>
+                  </Grid> */}
                 </Grid>
                 <Grid item xs={12} md={6} style={{ position: 'relative' }}>
                   <Typography variant="h1" gutterBottom style={{ marginTop:'100px' }}>
