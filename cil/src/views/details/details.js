@@ -196,8 +196,9 @@ class Content extends React.Component {
   updateAvailableTabs = (item) => {
     const tabsOrder = [
       { label: 'Tender Requirements', key: 'summary' },
-      { label: 'Technical Details', key: 'technical' },
       { label: 'Commercial Details', key: 'commercial' },
+      { label: 'Technical Details', key: 'technical' },
+      
       { label: 'Eligibility Details', key: 'eligibility' },
       { label: 'Provenness Details', key: 'provenness' },
       { label: 'Comparison', key: 'comparison' },
@@ -400,7 +401,7 @@ renderComparisionTable = (item) => {
         item.vendors?.forEach((vendor) => {
           const response = vendor.responses[category]?.data[criteria.criteria_id]?.response || '-';
           const evaluation = vendor.responses[category]?.data[criteria.criteria_id]?.result || '-';
-          row[`${vendor.vendor_name} (Response)`] = response;
+          // row[`${vendor.vendor_name} (Response)`] = response;
           row[`${vendor.vendor_name} (Evaluation)`] = evaluation;
         });
         tableData.push(row);
@@ -428,12 +429,12 @@ renderComparisionTable = (item) => {
             <TableRow>
               <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Criteria</TableCell>
               <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Sub Category</TableCell>
-              <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell>
+              <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' , width:'400px'  }}>Summary</TableCell>
               {item?.vendors?.map((vendor, index) => (
                 <>
-                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000', width:'500px' }} key={`${vendor.vendor_name}-response`}>
+                  {/* <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000', width:'500px' }} key={`${vendor.vendor_name}-response`}>
                     {vendor?.vendor_name} (Response)
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000'}} key={`${vendor.vendor_name}-evaluation`}>
                     {vendor?.vendor_name} (Evaluation)
                   </TableCell>
@@ -446,12 +447,12 @@ renderComparisionTable = (item) => {
               <TableRow key={rowIndex} style={{ borderBottom: '1px solid #000' }}>
                 <TableCell><b>{row.Criteria}</b></TableCell>
                 <TableCell>{row["Sub Category"]}</TableCell>
-                <TableCell>{row.Summary}</TableCell>
+                <TableCell style={{ width:'400px' }}>{row.Summary}</TableCell>
                 {item.vendors.map((vendor, vendorIndex) => (
                   <>
-                    <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-response`} style={{ width:'500px'}}>
+                    {/* <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-response`} style={{ width:'500px'}}>
                       {row[`${vendor.vendor_name} (Response)`]}
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell key={`${vendor?.vendor_name}-${vendorIndex}-evaluation`} >
                       <span
                         style={{
@@ -562,7 +563,7 @@ renderComparisionTable = (item) => {
               {item?.tender_info?.requirements &&
                 <>
                   <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Requirements</TableCell>
-                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>Summary</TableCell>
+                  <TableCell sx={{ backgroundColor: '#0E1635', color: 'white', borderBottom: '2px solid #000', borderTop: '2px solid #000', width:'400px'  }}>Summary</TableCell>
                 </>
               }
               {item?.vendors?.map((vendor, index) => (
@@ -586,13 +587,17 @@ renderComparisionTable = (item) => {
                       {criteria.criteria_subcategory}
                     </TableCell>
                   )}
-                  <TableCell>{criteria.criteria_description}</TableCell>
+                  <TableCell style={{width:'400px'}}>{criteria.criteria_description}</TableCell>
                   {item?.vendors?.map((vendor, vendorIndex) => {
-                    const response = vendor.responses[req_parm]?.data[criteria.criteria_id]?.response || '-';
+                    const response = vendor.responses[req_parm]?.data[criteria.criteria_id] || '-';
                     const evaluation = vendor.responses[req_parm]?.data[criteria.criteria_id]?.result || '-';
                     return (
                       <React.Fragment key={`${vendor?.vendor_name}-${vendorIndex}-${criteria.criteria_id}`}>
-                        <TableCell>{response}</TableCell>
+                        <TableCell style={{ width: '500px' }}>{response.response}
+                         <IconButton onClick={() => this.handleOpen(response?.related_content, response?.url, response?.file_name)} style={{padding:'0'}}>
+                          <Info  style={{padding:'0'}}/>
+                        </IconButton>
+                        </TableCell>
                         <TableCell>
                           <span
                             style={{
@@ -630,11 +635,11 @@ renderComparisionTable = (item) => {
         aria-describedby="simple-modal-description"
       >
         <Box style={styles.modalStyle}>
-          <h2 id="simple-modal-title">Extracted from {modalURLName}</h2>
+          <h2 id="simple-modal-title">Extracted from  { modalURLName}</h2>
           <p id="simple-modal-description">{modalContent}</p>
           {modalURL && (
             <Button variant="contained" color="primary" href={modalURL} target="_blank" style={styles.modalButton}>
-              <LinkIcon style={{ marginRight: "10px" }} /> {modalURLName}
+              <LinkIcon style={{marginRight:"10px" }}/> {modalURLName }
             </Button>
           )}
         </Box>
@@ -659,16 +664,16 @@ renderComparisionTable = (item) => {
                   <img src={Frame2} alt="crane1" style={{ width: '94%',  borderRadius: '25px'}} />
                   <Grid container spacing={2} style={{marginTop:'0px'}}>
                     <Grid item>
-                      <img src={Frame2} alt="crane2" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                      <img src={Frame2} alt="crane2" style={{ width: '110px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                     </Grid>
                     <Grid item>
-                      <img src={Frame2N} alt="crane3" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                      <img src={Frame2N} alt="crane3" style={{ width: '110px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                     </Grid>
                     <Grid item>
-                      <img src={Frame4N} alt="crane5" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow: '15px 14px 20px 0 #00000057' }} />
+                      <img src={Frame4N} alt="crane5" style={{ width: '110px', height: '80px', borderRadius: '8px', boxShadow: '15px 14px 20px 0 #00000057' }} />
                     </Grid>
                     <Grid item>
-                      <img src={Frame3N} alt="crane4" style={{ width: '120px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
+                      <img src={Frame3N} alt="crane4" style={{ width: '110px', height: '80px', borderRadius: '8px', boxShadow:'15px 14px 20px 0 #00000057' }} />
                     </Grid>
                   </Grid>
                 </Grid>
@@ -726,21 +731,21 @@ renderComparisionTable = (item) => {
                   {item.tender_info?.tender_date && <Grid item xs={6} mt={2}>
                     <Typography variant="body2" fontWeight='Bold'>Tender Date:</Typography>
                   </Grid>}
-                  <Grid item xs={6} mt={2} style={{ textAlign: 'right' }}>
+                  {item && item.tender_info && item.tender_info?.tender_date && <Grid item xs={6} mt={2} style={{ textAlign: 'right' }}>
                     <Typography variant="h5">{item && item.tender_info && item.tender_info?.tender_date}</Typography>
-                  </Grid>
+                  </Grid>}
                   {item && item.tender_info && item.tender_info?.tender_value && <Grid item xs={6} mt={2}>
                     <Typography variant="body2" fontWeight='Bold'>Tender Value:</Typography>
                   </Grid>}
-                  <Grid item xs={6} mt={2} style={{ textAlign: 'right' }}>
+                  {item && item.tender_info && item.tender_info?.tender_value && <Grid item xs={6} mt={2} style={{ textAlign: 'right' }}>
                     <Typography variant="h5">{item && item.tender_info && item.tender_info?.tender_value}</Typography>
-                  </Grid>
+                  </Grid>}
                   {item && item.tender_info && item.tender_info?.tender_deposit && <Grid item xs={6} mt={2}>
                     <Typography variant="body2" fontWeight='Bold'>Tender Deposit:</Typography>
                   </Grid>}
-                  <Grid item xs={6} mt={2} style={{ textAlign: 'right' }}>
+                  {item && item.tender_info && item.tender_info?.tender_deposit && <Grid item xs={6} mt={2} style={{ textAlign: 'right' }}>
                     <Typography variant="h5">{item && item.tender_info && item.tender_info?.tender_deposit}</Typography>
-                  </Grid>
+                  </Grid>}
                 </Grid>
               </>}
             </Paper>
@@ -761,8 +766,9 @@ renderComparisionTable = (item) => {
               </Tabs>
               <Box sx={{ p: 3 }}>
                 {availableTabs[selectedTab]?.key === 'summary' && this.renderTenderTable(item)}
-                {availableTabs[selectedTab]?.key === 'technical' && this.renderTechnicalTable(item, 'technical')}
                 {availableTabs[selectedTab]?.key === 'commercial' && this.renderTechnicalTable(item, 'commercial')}
+                {availableTabs[selectedTab]?.key === 'technical' && this.renderTechnicalTable(item, 'technical')}
+                
                 {availableTabs[selectedTab]?.key === 'eligibility' && this.renderTechnicalTable(item, 'eligibility')}
                 {availableTabs[selectedTab]?.key === 'provenness' && this.renderTechnicalTable(item, 'provenness')}
                 {availableTabs[selectedTab]?.key === 'comparison' && this.renderComparisionTable(item)}
